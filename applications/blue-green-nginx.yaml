@@ -1,30 +1,48 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: blue-green-nginx
+  name: bluegreen-nginx
   namespace: argocd
 spec:
   project: default
+
+  # -------------------------------------------------------------
+  # MULTI-SOURCE CONFIGURATION (2 repos)
+  # -------------------------------------------------------------
+  sources:
+    # -----------------------------------------------------------
+    # Source 1: HELM REPOSITORY
+    # -----------------------------------------------------------
+    - repoURL: "https://github.com/abdtamboli/blue-green-canary-helm.git"
+      targetRevision: main
+      path: bluegreen-nginx        # folder inside helm repo
+      helm:
+        valueFiles:
+          - values.yaml            # default Helm values
+
+    # -----------------------------------------------------------
+    # Source 2: GITOPS REPOSITORY (ENV VALUES)
+    # -----------------------------------------------------------
+    - repoURL: "https://github.com/abdtamboli/blue-green-canary-gitops.git"
+      targetRevision: main
+      path: dev                    # folder inside gitops repo
+      ref: values                 # this ref name is referenced below
+
+  # -------------------------------------------------------------
+  # SYNC POLICY — merge both repos
+  # -------------------------------------------------------------
+  source:
+    helm:
+      valueFiles:
+        - $values/values.yaml      # <-- IMPORTANT: pulls values from GitOps repo
 
   destination:
     server: https://kubernetes.default.svc
     namespace: dev
 
-  sources:
-    # 1) Helm chart comes from HELM repo
-    - repoURL: https://github.com/<YOUR_GITHUB_USERNAME>/blue-green-canary-helm.git
-      targetRevision: main
-      path: .
-      helm:
-        valueFiles:
-          # This tells ArgoCD: pull values.yaml from the SECOND repo source (ref: values)
-          - $values/dev/values.yaml
-
-    # 2) Values come from GITOPS repo
-    - repoURL: https://github.com/<YOUR_GITHUB_USERNAME>/blue-green-canary-GitOps.git
-      targetRevision: main
-      ref: values
-
+  # -------------------------------------------------------------
+  # AUTOMATED SYNC (optional)
+  # -------------------------------------------------------------
   syncPolicy:
     automated:
       prune: true
