@@ -6,43 +6,30 @@ metadata:
 spec:
   project: default
 
-  # -------------------------------------------------------------
-  # MULTI-SOURCE CONFIGURATION (2 repos)
-  # -------------------------------------------------------------
   sources:
-    # -----------------------------------------------------------
-    # Source 1: HELM REPOSITORY
-    # -----------------------------------------------------------
+    # SOURCE 1 — HELM CHART LOCATION
     - repoURL: "https://github.com/abdtamboli/blue-green-canary-helm.git"
       targetRevision: main
-      path: blue-green-canary-helm        # folder inside helm repo
+      path: blue-green-canary-helm/blue-green-canary-helm
       helm:
         valueFiles:
-          - values.yaml            # default Helm values
+          - values.yaml
 
-    # -----------------------------------------------------------
-    # Source 2: GITOPS REPOSITORY (ENV VALUES)
-    # -----------------------------------------------------------
+    # SOURCE 2 — GITOPS ENV VALUES
     - repoURL: "https://github.com/abdtamboli/blue-green-canary-gitops.git"
       targetRevision: main
-      path: dev                    # folder inside gitops repo
-      ref: values                 # this ref name is referenced below
+      path: dev
+      ref: values
 
-  # -------------------------------------------------------------
-  # SYNC POLICY — merge both repos
-  # -------------------------------------------------------------
   source:
     helm:
       valueFiles:
-        - $values/values.yaml      # <-- IMPORTANT: pulls values from GitOps repo
+        - $values/dev/values.yaml
 
   destination:
     server: https://kubernetes.default.svc
     namespace: dev
 
-  # -------------------------------------------------------------
-  # AUTOMATED SYNC (optional)
-  # -------------------------------------------------------------
   syncPolicy:
     automated:
       prune: true
