@@ -15,7 +15,7 @@ spec:
     # -----------------------------------------------------------
     - repoURL: "https://github.com/abdtamboli/blue-green-canary-helm.git"
       targetRevision: main
-      path: bluegreen-nginx        # folder inside helm repo
+      path: blue-green-canary-helm        # folder inside helm repo
       helm:
         valueFiles:
           - values.yaml            # default Helm values
