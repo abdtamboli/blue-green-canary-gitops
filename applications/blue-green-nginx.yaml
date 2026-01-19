@@ -1,0 +1,31 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: blue-green-nginx
+  namespace: argocd
+spec:
+  project: default
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: dev
+
+  sources:
+    # 1) Helm chart comes from HELM repo
+    - repoURL: https://github.com/<YOUR_GITHUB_USERNAME>/blue-green-canary-helm.git
+      targetRevision: main
+      path: .
+      helm:
+        valueFiles:
+          # This tells ArgoCD: pull values.yaml from the SECOND repo source (ref: values)
+          - $values/dev/values.yaml
+
+    # 2) Values come from GITOPS repo
+    - repoURL: https://github.com/<YOUR_GITHUB_USERNAME>/blue-green-canary-GitOps.git
+      targetRevision: main
+      ref: values
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true

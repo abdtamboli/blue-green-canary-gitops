@@ -1,0 +1,85 @@
+# -------------------------------------------------------------------
+# ENVIRONMENT METADATA
+# -------------------------------------------------------------------
+environment: dev
+appName: nginx-bluegreen
+
+namespace: dev
+
+# -------------------------------------------------------------------
+# IMAGE CONFIGURATION
+# (CI will update the tag here via PR)
+# -------------------------------------------------------------------
+image:
+  repository: nginx
+  tag: "1.25"     # <--- CI pipeline will update this
+
+# -------------------------------------------------------------------
+# REPLICAS
+# -------------------------------------------------------------------
+replicaCount: 2
+
+# -------------------------------------------------------------------
+# SERVICE CONFIGURATION
+# -------------------------------------------------------------------
+service:
+  type: ClusterIP
+  port: 80
+
+# Names used by Argo Rollouts:
+blueGreen:
+  activeService: nginx-service
+  previewService: nginx-service-preview
+
+# -------------------------------------------------------------------
+# ROLLOUT STRATEGY (MAIN SECTION)
+# -------------------------------------------------------------------
+rollout:
+  enabled: true
+  strategy: BlueGreen
+
+  blueGreen:
+    autoPromotionEnabled: false          # <--- Only promote manually
+    autoPromotionSeconds: 0              # <--- No auto promotion
+    scaleDownDelaySeconds: 30            # <--- Delay before scaling down old version
+
+    prePromotionAnalysis:
+      enabled: false                     # Optional
+
+    postPromotionAnalysis:
+      enabled: false                     # Optional
+
+    # This ensures both blue and green run at the same time
+    extraReplicaCount: 1
+
+# -------------------------------------------------------------------
+# RESOURCE LIMITS (just good practice)
+# -------------------------------------------------------------------
+resources:
+  limits:
+    cpu: 200m
+    memory: 256Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+
+# -------------------------------------------------------------------
+# PROBES (recommended for rollout stability)
+# -------------------------------------------------------------------
+livenessProbe:
+  path: /
+  port: 80
+  initialDelaySeconds: 3
+  periodSeconds: 10
+
+readinessProbe:
+  path: /
+  port: 80
+  initialDelaySeconds: 3
+  periodSeconds: 5
+
+# -------------------------------------------------------------------
+# INGRESS (optional future use)
+# -------------------------------------------------------------------
+ingress:
+  enabled: false
